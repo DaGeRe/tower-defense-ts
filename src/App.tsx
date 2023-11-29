@@ -15,47 +15,26 @@ function addTower() {
   context.fillRect(10, 10, 150, 150);
 }
 
-class App extends React.Component {
-  mapsizeX: number;
-  mapsizeY: number;
-  fieldsize: number;
+function App() {
+  const [chosenTower, setChosenTower] = React.useState(1)
+  const [gold, setGold] = React.useState(250)
+  const [nextWave, setNextWave] = React.useState(200)
+  const [lives, setLives] = React.useState(10)
+  const [level, setLevel] = React.useState(1)
 
-  tower: string;
-  gold: number;
+  this.mapsizeX = 90;
+  this.mapsizeY = 60;
+  this.fieldsize = 30;
+  this.gold = 100;
 
-  towers: Array<Tower>;
-  monsters: Array<Monster>;
-  shots: Array<Shot>;
-  monsterPath: MonsterPath;
+  this.towers = [];
+  this.monsters = [];
+  this.shots = [];
+  this.monsterPath = new MonsterPath();
 
-  constructor(P: any) {
-    super(P);
-    this.mapsizeX = 90;
-    this.mapsizeY = 60;
-    this.fieldsize = 30;
-    this.gold = 100;
+  this.tower = "regular";
 
-    this.towers = [];
-    this.monsters = [];
-    this.shots = [];
-    this.monsterPath = new MonsterPath();
-
-    this.handleClick = this.handleClick.bind(this);
-    this.draw = this.draw.bind(this);
-    this.handleTower = this.handleTower.bind(this);
-    this.start = this.start.bind(this);
-    this.state = {
-      chosenTower: 1,
-      gold: 250,
-      nextWave: 200,
-      lives: 10,
-      level: 1
-    };
-
-    this.tower = "regular";
-  }
-
-  handleClick(event) {
+  function handleClick(event) {
     var canvas = document.getElementById("mainGame");
 
     var x = new Number();
@@ -81,7 +60,7 @@ class App extends React.Component {
     let posx = (x / this.fieldsize) | 0;
     let posy = (y / this.fieldsize) | 0;
 
-    console.log("Remaining gold: " + this.state.gold + " Chosen: " + this.state.chosenTower);
+    console.log("Remaining gold: " + gold + " Chosen: " + chosenTower);
     let cost;
     switch (this.state.chosenTower){
       case 1: cost = 10; break;
@@ -89,6 +68,7 @@ class App extends React.Component {
       case 3: cost = 20; break;
     }
     if (this.state.gold >= cost) {
+
       this.setState({gold: this.state.gold-cost});
       let tower = new Tower(posx, posy, this.state.chosenTower, this.fieldsize);
       let newIndex = this.towers.length;
@@ -98,11 +78,11 @@ class App extends React.Component {
     this.draw();
   }
 
-  start() {
+  function start() {
     const loop = new GameLoop();
 
     loop.subscribe(() => {
-      this.setState({ nextWave: this.state.nextWave - 1 });
+      setNextWave(nextWave-1);
 
       let shotsToDelete = [];
       for (let i = 0; i < this.shots.length; i++) {
@@ -116,16 +96,16 @@ class App extends React.Component {
         this.shots.splice(deleteId, 1);
       }
 
-      for (let i = 0; i < this.monsters.length; i++) {
-        const monster = this.monsters[i];
+      for (let i = 0; i < monsters.length; i++) {
+        const monster = monsters[i];
         monster.update();
         if (monster.dead){
           this.monsters.splice(i, 1);
-          this.setState({ gold: this.state.gold + 1 });
+          setGold(gold+1);
           console.log("Getting gold");
         } else if (monster.finished) {
           this.monsters.splice(i, 1);
-          this.setState({ lives: this.state.lives - 1 });
+          setLives(lives-1);
           console.log("State changed, lives: " + this.state.lives);
           if (this.state.lives - 1 < 1){
             console.log("Finishing");
@@ -139,7 +119,7 @@ class App extends React.Component {
           }
         }
       }
-      for (const tower of this.towers) {
+      for (const tower of towers) {
         tower.update();
         if (tower.canFire()) {
           for (const monster of this.monsters) {
@@ -151,20 +131,22 @@ class App extends React.Component {
       }
 
       if (this.state.nextWave <= 0) {
-        this.setState({ nextWave: 2000, level: this.state.level+1, gold: this.state.gold+20 });
+        setNextWave(2000);
+        setLevel(level+1);
+        setGold(gold+20);
 
         console.log("Created monster");
         for (let i = 0; i < 10 * this.state.level; i++) {
           this.monsters.push(new Monster(this.monsterPath, this.fieldsize, i * 70));
         }
       }
-      this.draw();
+      draw();
     });
 
     loop.start();
   }
 
-  draw() {
+  function draw() {
     var canvas = document.getElementById("mainGame");
     const context = canvas.getContext("2d");
 
@@ -181,23 +163,22 @@ class App extends React.Component {
     }
   }
 
-  handleTower(event, newTower: string){
+  function handleTower(event, newTower: string){
     this.tower = newTower;
     if (newTower == 'regular') {
-      this.setState({chosenTower: 1});
+      setChosenTower(1);
     }
     if (newTower == 'ice') {
-      this.setState({chosenTower: 2});
+      setChosenTower(2);
     }
     if (newTower == 'fire') {
-      this.setState({chosenTower: 3});
+      setChosenTower(3);
     }
-    console.log(newTower + " Chosen: " + this.state.chosenTower);
+    console.log(newTower + " Chosen: " + chosenTower);
     this.render();
   }
 
-  render() {
-    return (
+  return (
       <>
         <h1>Tower Defense</h1>
         <button onClick={this.start}>Start</button>
@@ -219,17 +200,16 @@ class App extends React.Component {
           </ToggleButtonGroup>
           </div>
           <div>
-          Gold: {this.state.gold}<br />
-          Next Wave: {this.state.nextWave / 100 | 0} Level: {this.state.level} <br />
-          Lives: {this.state.lives}<br />
+          Gold: {gold}<br />
+          Next Wave: {nextWave / 100 | 0} Level: {level} <br />
+          Lives: {lives}<br />
           </div>
           <canvas id='mainGame' className='gameregion' width="900" height="600"
-                onClick={this.handleClick}>
+                onClick={handleClick}>
             </canvas>
         
       </>
     )
-  }
 }
 
 export default App
