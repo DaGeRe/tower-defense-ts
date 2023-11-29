@@ -8,8 +8,9 @@ import Monster from './Monster.tsx';
 import GameLoop from './game-loop.js';
 import Shot from './Shot.tsx';
 import { useEffect, useState } from 'react';
+import { GameCanvas } from './GameCanvas.tsx';
 
-const useFrameTime = () => {
+export const useFrameTime = () => {
   const [frameTime, setFrameTime] = React.useState(performance.now());
   useEffect(() => {
     let frameId;
@@ -42,7 +43,7 @@ export const App: React.FC = () => {
   const [lives, setLives] = useState<number>(10);
   const [level, setLevel] = useState<number>(1);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
-
+  const [gameOver, setGameOver] = useState<boolean>(false);
   const [idCounter, setIdCounter] = useState<number>(0);
 
   useEffect(() => {
@@ -86,8 +87,6 @@ export const App: React.FC = () => {
       setGold(gold - cost);
       setTowers([...towers, new Tower(posx, posy, chosenTower, fieldsize)])
     }
-
-    draw();
   }
 
   const start = () => {
@@ -124,12 +123,7 @@ export const App: React.FC = () => {
         if (lives - 1 < 1){
           console.log("Finishing");
           setGameStarted(false);
-          // loop.stop();
-          // loop.unsubscribe(1);
-          let canvas = document.getElementById("mainGame") as HTMLCanvasElement;
-          let ctx = canvas.getContext("2d");
-          ctx.font = "68px serif";
-          ctx.fillText("Game Over", 100, 250);
+          setGameOver(true);
           return;
         }
       }
@@ -167,29 +161,9 @@ export const App: React.FC = () => {
       console.log(newMonsters)
     }
     setIdCounter(id);
-    draw();
 }
 
-  const draw = () => {
-    var canvas = document.getElementById("mainGame") as HTMLCanvasElement;
-    const context = canvas.getContext("2d");
-
-    for (const tower of towers) {
-      tower.draw(context, fieldsize);
-    }
-    for (const shot of shots) {
-      shot.draw(context, fieldsize);
-    }
-    monsterPath.draw(context, fieldsize);
-
-    for (const monster of monsters) {
-      monster.draw(context, fieldsize);
-    }
-  }
-
-
-
-  const handleTower = (event, newTower: string) => {
+  const handleTower = (_event, newTower: string) => {
     setTower(newTower);
     switch (newTower){
       case "regular": setChosenTower(1); break;
@@ -225,9 +199,12 @@ export const App: React.FC = () => {
         Next Wave: {nextWave / 100 | 0} Level: {level} <br />
         Lives: {lives}<br />
         </div>
-        <canvas id='mainGame' className='gameregion' width="900" height="600"
-              onClick={handleClick}>
-          </canvas>
+        <GameCanvas 
+          monsters={monsters}
+          towers={towers}
+          shots={shots}
+          onHandleClick={handleClick}
+          gameOver={gameOver}></GameCanvas>
       
     </>
   )
