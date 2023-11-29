@@ -3,13 +3,15 @@ import { Position } from "./Position";
 import Monster from "./Monster";
 
 class Shot extends Movable {
+    id: number
     aim: Monster;
     type: number;
     arrived: boolean;
 
-    constructor(virtualPosition: Position, aim : Monster, fieldsize: number, type: number, velocity: number){
+    constructor(id: number, virtualPosition: Position, aim : Monster, fieldsize: number, type: number, velocity: number){
         super(virtualPosition, aim.getPosition(), fieldsize, velocity);
 
+        this.id = id;
         this.type = type;
         this.aim = aim;
         this.arrived = false;

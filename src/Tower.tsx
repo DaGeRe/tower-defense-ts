@@ -32,11 +32,11 @@ class Tower {
         return this.canfire == 210;
     }
 
-    getShot(monster: Monster): Shot {
+    getShot(shotId: number, monster: Monster): Shot {
         this.canfire = 0;
 
         let position = new Position(this.x * this.fieldsize, this.y * this.fieldsize);
-        let shot = new Shot(position, monster, this.fieldsize, this.type, 2);
+        let shot = new Shot(shotId, position, monster, this.fieldsize, this.type, 2);
         return shot;
       }
 

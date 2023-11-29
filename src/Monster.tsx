@@ -5,7 +5,8 @@ enum States {
     Regular, Frozen, OnFire
 }
 
-class Monster {
+class Monster  {
+    id: number
     path: MonsterPath;
     virtualPosition : Position;
     positionIndex : number;
@@ -18,7 +19,8 @@ class Monster {
     lives : number;
 
 
-    constructor(path: MonsterPath , fieldsize: number, sleeptime: number) {
+    constructor(id: number, path: MonsterPath , fieldsize: number, sleeptime: number) {
+        this.id = id;
         this.finished = false;
         this.path = path;
         this.virtualPosition = new Position(path.getPath()[0].getX() * fieldsize, path.getPath()[0].getY() * fieldsize);
@@ -34,6 +36,7 @@ class Monster {
         this.isFinished = this.isFinished.bind(this);
         this.getPosition = this.getPosition.bind(this);
         this.draw = this.draw.bind(this);
+        
     }
 
     update(){
