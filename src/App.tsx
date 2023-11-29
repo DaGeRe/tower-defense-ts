@@ -107,9 +107,9 @@ export const App: React.FC = () => {
         shotsToDelete.push(shot.id);
       }
     }
-    setShots(shots.filter(x => shotsToDelete.find(y => y == x.id) === -1))
+    setShots(shots.filter(x => shotsToDelete.find(y => y == x.id) === undefined))
 
-    let monstersToDelete = [];
+    let monstersToDelete : number[] = [];
     for (const monster of monsters) { 
       monster.update();
       if (monster.dead){
@@ -128,9 +128,9 @@ export const App: React.FC = () => {
         }
       }
     }
-    if(monstersToDelete.length > 0) {
-      console.log(monstersToDelete)
-      setMonsters(monsters.filter(x => monstersToDelete.find(y => y == x.id) === -1))
+  if(monstersToDelete.length > 0) {
+      console.log("To delete " +  monstersToDelete)
+      setMonsters(monsters.filter(x => monstersToDelete.find(y => y == x.id) === undefined))
     }
 
 
