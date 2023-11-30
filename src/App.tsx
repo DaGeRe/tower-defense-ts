@@ -6,6 +6,7 @@ import Tower from './Tower.tsx'
 import MonsterPath from './MonsterPath.tsx';
 import Monster from './Monster.tsx';
 import GameLoop from './game-loop.js';
+import Shot from './Shot.tsx';
 
 function addTower() {
   const element = document.getElementById("mainGame");
@@ -16,29 +17,28 @@ function addTower() {
 }
 
 function App() {
-  const [chosenTower, setChosenTower] = React.useState(1)
-  const [gold, setGold] = React.useState(250)
-  const [nextWave, setNextWave] = React.useState(200)
-  const [lives, setLives] = React.useState(10)
-  const [level, setLevel] = React.useState(1)
+  const [chosenTower, setChosenTower] = React.useState<number>(1)
+  const [gold, setGold] = React.useState<number>(250)
+  const [nextWave, setNextWave] = React.useState<number>(200)
+  const [lives, setLives] = React.useState<number>(10)
+  const [level, setLevel] = React.useState<number>(1)
 
-  this.mapsizeX = 90;
-  this.mapsizeY = 60;
-  this.fieldsize = 30;
-  this.gold = 100;
+  const mapsizeX = 90;
+  const mapsizeY = 60;
+  const fieldsize = 30;
 
-  this.towers = [];
-  this.monsters = [];
-  this.shots = [];
-  this.monsterPath = new MonsterPath();
+  const towers: Tower[] = [];
+  const monsters : Monster[] = [];
+  const shots : Shot[] = [];
+  const monsterPath = new MonsterPath();
 
-  this.tower = "regular";
+  let tower = "regular";
 
   function handleClick(event) {
     var canvas = document.getElementById("mainGame");
 
-    var x = new Number();
-    var y = new Number();
+    var x : number;
+    var y : number;
 
     if (event.x != undefined && event.y != undefined) {
       x = event.x;
@@ -57,92 +57,94 @@ function App() {
 
     //const context = canvas.getContext("2d");
 
-    let posx = (x / this.fieldsize) | 0;
-    let posy = (y / this.fieldsize) | 0;
+    const posx = (x / fieldsize) | 0;
+    const posy = (y / fieldsize) | 0;
 
     console.log("Remaining gold: " + gold + " Chosen: " + chosenTower);
     let cost;
-    switch (this.state.chosenTower){
+    switch (chosenTower){
       case 1: cost = 10; break;
       case 2: cost = 20; break;
       case 3: cost = 20; break;
     }
-    if (this.state.gold >= cost) {
-
-      this.setState({gold: this.state.gold-cost});
-      let tower = new Tower(posx, posy, this.state.chosenTower, this.fieldsize);
-      let newIndex = this.towers.length;
-      this.towers[newIndex] = tower;
+    if (gold >= cost) {
+      setGold(gold - cost);
+      let tower = new Tower(posx, posy, chosenTower, fieldsize);
+      let newIndex = towers.length;
+      towers[newIndex] = tower;
     }
 
-    this.draw();
+    draw();
+  }
+
+  function handleFrame() {
+    console.log("Next Wave: "  + nextWave);
+    setNextWave(nextWave-1);
+    console.log("Next Wave: "  + nextWave);
+
+    let shotsToDelete = [];
+    for (let i = 0; i < shots.length; i++) {
+      const shot = shots[i];
+      shot.update();
+      if (shot.isFinished()){
+        shotsToDelete.push(i);
+      }
+    }
+    for (const deleteId of shotsToDelete) {
+      shots.splice(deleteId, 1);
+    }
+
+    for (let i = 0; i < monsters.length; i++) {
+      const monster = monsters[i];
+      monster.update();
+      if (monster.dead){
+        monsters.splice(i, 1);
+        setGold(gold+1);
+        console.log("Getting gold");
+      } else if (monster.finished) {
+        monsters.splice(i, 1);
+        setLives(lives-1);
+        console.log("State changed, lives: " + lives);
+        if (lives - 1 < 1){
+          console.log("Finishing");
+          loop.stop();
+          loop.unsubscribe(1);
+          let canvas = document.getElementById("mainGame");
+          let ctx = canvas.getContext("2d");
+          ctx.font = "68px serif";
+          ctx.fillText("Game Over", 100, 250);
+          return;
+        }
+      }
+    }
+    for (const tower of towers) {
+      tower.update();
+      if (tower.canFire()) {
+        for (const monster of monsters) {
+          if (tower.isInDistance(monster) && tower.canFire()) {
+            shots.push(tower.getShot(monster));
+          }
+        }
+      }
+    }
+
+    if (nextWave <= 0) {
+      setNextWave(2000);
+      setLevel(level+1);
+      setGold(gold+20);
+
+      console.log("Created monster");
+      for (let i = 0; i < 10 * level; i++) {
+        monsters.push(new Monster(monsterPath, fieldsize, i * 70));
+      }
+    }
+    draw();
   }
 
   function start() {
     const loop = new GameLoop();
 
-    loop.subscribe(() => {
-      setNextWave(nextWave-1);
-
-      let shotsToDelete = [];
-      for (let i = 0; i < this.shots.length; i++) {
-        const shot = this.shots[i];
-        shot.update();
-        if (shot.isFinished()){
-          shotsToDelete.push(i);
-        }
-      }
-      for (const deleteId of shotsToDelete) {
-        this.shots.splice(deleteId, 1);
-      }
-
-      for (let i = 0; i < monsters.length; i++) {
-        const monster = monsters[i];
-        monster.update();
-        if (monster.dead){
-          this.monsters.splice(i, 1);
-          setGold(gold+1);
-          console.log("Getting gold");
-        } else if (monster.finished) {
-          this.monsters.splice(i, 1);
-          setLives(lives-1);
-          console.log("State changed, lives: " + this.state.lives);
-          if (this.state.lives - 1 < 1){
-            console.log("Finishing");
-            loop.stop();
-            loop.unsubscribe(1);
-            let canvas = document.getElementById("mainGame");
-            let ctx = canvas.getContext("2d");
-            ctx.font = "68px serif";
-            ctx.fillText("Game Over", 100, 250);
-            return;
-          }
-        }
-      }
-      for (const tower of towers) {
-        tower.update();
-        if (tower.canFire()) {
-          for (const monster of this.monsters) {
-            if (tower.isInDistance(monster) && tower.canFire()) {
-              this.shots.push(tower.getShot(monster));
-            }
-          }
-        }
-      }
-
-      if (this.state.nextWave <= 0) {
-        setNextWave(2000);
-        setLevel(level+1);
-        setGold(gold+20);
-
-        console.log("Created monster");
-        for (let i = 0; i < 10 * this.state.level; i++) {
-          this.monsters.push(new Monster(this.monsterPath, this.fieldsize, i * 70));
-        }
-      }
-      draw();
-    });
-
+    loop.subscribe(handleFrame);
     loop.start();
   }
 
@@ -150,21 +152,21 @@ function App() {
     var canvas = document.getElementById("mainGame");
     const context = canvas.getContext("2d");
 
-    for (const tower of this.towers) {
-      tower.draw(context, this.fieldsize);
+    for (const tower of towers) {
+      tower.draw(context, fieldsize);
     }
-    for (const shot of this.shots) {
-      shot.draw(context, this.fieldsize);
+    for (const shot of shots) {
+      shot.draw(context, fieldsize);
     }
-    this.monsterPath.draw(context, this.fieldsize);
+    monsterPath.draw(context, fieldsize);
 
-    for (const monster of this.monsters) {
-      monster.draw(context, this.fieldsize);
+    for (const monster of monsters) {
+      monster.draw(context, fieldsize);
     }
   }
 
   function handleTower(event, newTower: string){
-    this.tower = newTower;
+    tower = newTower;
     if (newTower == 'regular') {
       setChosenTower(1);
     }
@@ -175,18 +177,17 @@ function App() {
       setChosenTower(3);
     }
     console.log(newTower + " Chosen: " + chosenTower);
-    this.render();
   }
 
   return (
       <>
         <h1>Tower Defense</h1>
-        <button onClick={this.start}>Start</button>
+        <button onClick={start}>Start</button>
         <div>
           <ToggleButtonGroup
-            value={this.tower}
+            value={tower}
             exclusive
-            onChange={this.handleTower}
+            onChange={handleTower}
             aria-label="chosenTower">
             <ToggleButton value="regular">
               Regular Tower (10 Gold)
